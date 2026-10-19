@@ -3,32 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Interior Designer - Canvas</title>
+    <title>3D Interior Designer - Scandinavian Studio</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7f9fa;
         }
         #ui-overlay {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 24px;
+            left: 24px;
             z-index: 10;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 18px 22px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 240px;
         }
         #ui-overlay h2 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
-            color: #2c3e50;
+            margin: 0 0 6px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.3px;
         }
         #ui-overlay p {
-            margin: 0;
-            font-size: 13px;
-            color: #7f8c8d;
+            margin: 0 0 12px 0;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 4px;
+        }
+        .btn-row {
+            display: flex;
+            gap: 6px;
+        }
+        button {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #374151;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        button.active {
+            background: #111827;
+            color: #ffffff;
+            border-color: #111827;
         }
         #canvas-container {
             width: 100vw;
@@ -43,8 +86,26 @@
 <body>
 
     <div id="ui-overlay">
-        <h2>3D Room Studio</h2>
-        <p>Left Click + Drag: Rotate | Right Click + Drag: Pan | Scroll: Zoom</p>
+        <h2>Scandinavian Studio</h2>
+        <p>Rotate: Left Click + Drag | Pan: Right Click</p>
+        
+        <div class="control-group">
+            <label>Wall Color</label>
+            <div class="btn-row">
+                <button onclick="setWallColor(0xfaf9f6, this)" class="active">Off-White</button>
+                <button onclick="setWallColor(0xe8edea, this)">Sage</button>
+                <button onclick="setWallColor(0xdedad2, this)">Warm Grey</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Floor Finish</label>
+            <div class="btn-row">
+                <button onclick="setFloorColor(0xe3d3c3, this)" class="active">Light Oak</button>
+                <button onclick="setFloorColor(0x8b5a2b, this)">Walnut</button>
+                <button onclick="setFloorColor(0xd1d5db, this)">Concrete</button>
+            </div>
+        </div>
     </div>
 
     <div id="canvas-container"></div>
@@ -52,11 +113,11 @@
     <script>
         // 1. Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf4f6f8);
+        scene.background = new THREE.Color(0xf4f5f7);
 
         // 2. Camera Setup
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 12, 18);
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(2, 11, 16);
 
         // 3. Renderer Setup
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -68,48 +129,48 @@
         // 4. Orbit Controls
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent camera from clipping under floor
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.02;
 
-        // 5. Lighting Setup
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        // 5. Soft Studio Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
 
-        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        mainLight.position.set(10, 20, 15);
-        mainLight.castShadow = true;
-        mainLight.shadow.mapSize.width = 2048;
-        mainLight.shadow.mapSize.height = 2048;
-        scene.add(mainLight);
+        const keyLight = new THREE.DirectionalLight(0xfff5ee, 0.6);
+        keyLight.position.set(12, 18, 10);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        keyLight.shadow.bias = -0.0001;
+        scene.add(keyLight);
 
-        // 6. Build Room Dimensions (Width: 12m, Depth: 12m, Height: 5m)
+        // 6. Room Dimensions & Materials
         const roomWidth = 12;
         const roomDepth = 12;
-        const wallHeight = 5;
+        const wallHeight = 4.5;
 
-        // Floor Plane
+        // Floor Mesh
         const floorGeo = new THREE.PlaneGeometry(roomWidth, roomDepth);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0xdcdde1, side: THREE.DoubleSide });
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0xe3d3c3, roughness: 0.8, side: THREE.DoubleSide });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         scene.add(floor);
 
         // Grid Helper
-        const gridHelper = new THREE.GridHelper(roomWidth, 12, 0x2c3e50, 0xbdc3c7);
-        gridHelper.position.y = 0.01; // Slightly above floor to avoid z-fighting
+        const gridHelper = new THREE.GridHelper(roomWidth, 12, 0xd0d4dc, 0xe8ecf0);
+        gridHelper.position.y = 0.002;
         scene.add(gridHelper);
 
-        // Wall Material (Warm Interior Wall Color)
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1, side: THREE.DoubleSide });
+        // Walls Mesh
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xfaf9f6, roughness: 0.9, side: THREE.DoubleSide });
 
-        // Back Wall
         const backWallGeo = new THREE.PlaneGeometry(roomWidth, wallHeight);
         const backWall = new THREE.Mesh(backWallGeo, wallMat);
         backWall.position.set(0, wallHeight / 2, -roomDepth / 2);
         backWall.receiveShadow = true;
         scene.add(backWall);
 
-        // Left Wall
         const leftWallGeo = new THREE.PlaneGeometry(roomDepth, wallHeight);
         const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
         leftWall.position.set(-roomWidth / 2, wallHeight / 2, 0);
@@ -117,27 +178,42 @@
         leftWall.receiveShadow = true;
         scene.add(leftWall);
 
-        // 7. Add Decorative Furniture Placeholders (Table & Chair)
-        // Table Base
-        const tableGeo = new THREE.BoxGeometry(4, 0.2, 2.5);
-        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8e44ad });
-        const tableTop = new THREE.Mesh(tableGeo, woodMat);
-        tableTop.position.set(0, 2, 0);
+        // 7. Minimalist Table
+        const tableMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.7 });
+        const tableTopGeo = new THREE.BoxGeometry(3.6, 0.15, 2.2);
+        const tableTop = new THREE.Mesh(tableTopGeo, tableMat);
+        tableTop.position.set(0, 1.8, 0);
         tableTop.castShadow = true;
+        tableTop.receiveShadow = true;
         scene.add(tableTop);
 
-        // Table Legs
-        const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 2);
+        const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.8);
         const legPositions = [
-            [-1.8, 1, -1], [1.8, 1, -1],
-            [-1.8, 1, 1],  [1.8, 1, 1]
+            [-1.6, 0.9, -0.9], [1.6, 0.9, -0.9],
+            [-1.6, 0.9, 0.9],  [1.6, 0.9, 0.9]
         ];
         legPositions.forEach(pos => {
-            const leg = new THREE.Mesh(legGeo, woodMat);
+            const leg = new THREE.Mesh(legGeo, tableMat);
             leg.position.set(...pos);
             leg.castShadow = true;
             scene.add(leg);
         });
+
+        // Interactive Functions for UI Buttons
+        window.setWallColor = function(hexColor, btn) {
+            wallMat.color.setHex(hexColor);
+            // Update active button state in group
+            const buttons = btn.parentElement.querySelectorAll('button');
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
+
+        window.setFloorColor = function(hexColor, btn) {
+            floorMat.color.setHex(hexColor);
+            const buttons = btn.parentElement.querySelectorAll('button');
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
 
         // 8. Window Resize Handler
         window.addEventListener('resize', () => {
