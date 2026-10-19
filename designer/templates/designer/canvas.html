@@ -15,20 +15,20 @@
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 15px 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
         #ui-overlay h2 {
             margin: 0 0 5px 0;
             font-size: 18px;
-            color: #333;
+            color: #2c3e50;
         }
         #ui-overlay p {
             margin: 0;
             font-size: 13px;
-            color: #666;
+            color: #7f8c8d;
         }
         #canvas-container {
             width: 100vw;
@@ -36,14 +36,14 @@
         }
     </style>
 
-    <!-- Load Three.js and OrbitControls via CDN -->
+    <!-- Load Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
     <div id="ui-overlay">
-        <h2>3D Room Canvas</h2>
+        <h2>3D Room Studio</h2>
         <p>Left Click + Drag: Rotate | Right Click + Drag: Pan | Scroll: Zoom</p>
     </div>
 
@@ -52,49 +52,92 @@
     <script>
         // 1. Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf0f2f5);
+        scene.background = new THREE.Color(0xf4f6f8);
 
         // 2. Camera Setup
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(10, 10, 15);
+        camera.position.set(0, 12, 18);
 
         // 3. Renderer Setup
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // 4. Orbit Controls (Interactive camera movement)
+        // 4. Orbit Controls
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent camera from clipping under floor
 
         // 5. Lighting Setup
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(15, 20, 10);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        mainLight.position.set(10, 20, 15);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        scene.add(mainLight);
 
-        // 6. Add Grid Helper & 3D Floor
-        const gridHelper = new THREE.GridHelper(20, 20, 0x000000, 0xcccccc);
-        scene.add(gridHelper);
+        // 6. Build Room Dimensions (Width: 12m, Depth: 12m, Height: 5m)
+        const roomWidth = 12;
+        const roomDepth = 12;
+        const wallHeight = 5;
 
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, side: THREE.DoubleSide });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        // Floor Plane
+        const floorGeo = new THREE.PlaneGeometry(roomWidth, roomDepth);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0xdcdde1, side: THREE.DoubleSide });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // 7. Add a Sample 3D Cube (Furniture Placeholder)
-        const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
-        const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x3498db });
-        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        cube.position.set(0, 1, 0);
-        cube.castShadow = true;
-        scene.add(cube);
+        // Grid Helper
+        const gridHelper = new THREE.GridHelper(roomWidth, 12, 0x2c3e50, 0xbdc3c7);
+        gridHelper.position.y = 0.01; // Slightly above floor to avoid z-fighting
+        scene.add(gridHelper);
+
+        // Wall Material (Warm Interior Wall Color)
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1, side: THREE.DoubleSide });
+
+        // Back Wall
+        const backWallGeo = new THREE.PlaneGeometry(roomWidth, wallHeight);
+        const backWall = new THREE.Mesh(backWallGeo, wallMat);
+        backWall.position.set(0, wallHeight / 2, -roomDepth / 2);
+        backWall.receiveShadow = true;
+        scene.add(backWall);
+
+        // Left Wall
+        const leftWallGeo = new THREE.PlaneGeometry(roomDepth, wallHeight);
+        const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
+        leftWall.position.set(-roomWidth / 2, wallHeight / 2, 0);
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.receiveShadow = true;
+        scene.add(leftWall);
+
+        // 7. Add Decorative Furniture Placeholders (Table & Chair)
+        // Table Base
+        const tableGeo = new THREE.BoxGeometry(4, 0.2, 2.5);
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8e44ad });
+        const tableTop = new THREE.Mesh(tableGeo, woodMat);
+        tableTop.position.set(0, 2, 0);
+        tableTop.castShadow = true;
+        scene.add(tableTop);
+
+        // Table Legs
+        const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 2);
+        const legPositions = [
+            [-1.8, 1, -1], [1.8, 1, -1],
+            [-1.8, 1, 1],  [1.8, 1, 1]
+        ];
+        legPositions.forEach(pos => {
+            const leg = new THREE.Mesh(legGeo, woodMat);
+            leg.position.set(...pos);
+            leg.castShadow = true;
+            scene.add(leg);
+        });
 
         // 8. Window Resize Handler
         window.addEventListener('resize', () => {
