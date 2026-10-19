@@ -23,7 +23,7 @@
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            width: 250px;
+            width: 270px;
         }
         #ui-overlay h2 {
             margin: 0 0 4px 0;
@@ -51,10 +51,12 @@
         .btn-row {
             display: flex;
             gap: 6px;
+            flex-wrap: wrap;
         }
         button {
             flex: 1;
-            padding: 6px 10px;
+            min-width: 70px;
+            padding: 6px 8px;
             font-size: 11px;
             font-weight: 500;
             border: 1px solid #d1d5db;
@@ -118,12 +120,20 @@
         </div>
 
         <div class="control-group">
-            <label>Furniture Spawner</label>
+            <label>Furniture & Decor Spawner</label>
             <div class="btn-row">
                 <button class="spawn-btn" onclick="spawnFurniture('chair')">+ Chair</button>
+                <button class="spawn-btn" onclick="spawnFurniture('sofa')">+ Sofa</button>
                 <button class="spawn-btn" onclick="spawnFurniture('plant')">+ Plant</button>
-                <button onclick="clearFurniture()" style="background:#ef4444; color:white; border-color:#ef4444;">Clear</button>
+                <button class="spawn-btn" onclick="spawnFurniture('lamp')">+ Lamp</button>
+                <button class="spawn-btn" onclick="spawnFurniture('rug')">+ Rug</button>
+                <button class="spawn-btn" onclick="spawnFurniture('frame')">+ Frame</button>
+                <button onclick="clearFurniture()" style="background:#ef4444; color:white; border-color:#ef4444; min-width:100%;">Clear All Spawns</button>
             </div>
+        </div>
+
+        <div class="control-group" style="margin-top: 15px;">
+            <button onclick="saveRoomLayout()" style="background:#10b981; color:white; border-color:#10b981; width:100%; font-weight:600; padding:8px;">💾 Save Room Layout</button>
         </div>
     </div>
 
@@ -218,10 +228,10 @@
             scene.add(leg);
         });
 
-        // Track spawned dynamic furniture objects
+        // Track spawned objects
         let spawnedObjects = [];
 
-        // Interactive Functions for UI Buttons
+        // Interactive UI Functions
         window.setWallColor = function(hexColor, btn) {
             wallMat.color.setHex(hexColor);
             const buttons = btn.parentElement.querySelectorAll('button');
@@ -242,51 +252,89 @@
             let randomZ = (Math.random() - 0.5) * 6 + 2;
 
             if (type === 'chair') {
-                // Minimalist Lounge Chair
                 const seatMat = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.6 });
-                const seatGeo = new THREE.BoxGeometry(1.2, 0.2, 1.2);
-                const seat = new THREE.Mesh(seatGeo, seatMat);
-                seat.position.y = 0.8;
-                seat.castShadow = true;
-                group.add(seat);
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 1.2), seatMat);
+                seat.position.y = 0.8; seat.castShadow = true; group.add(seat);
 
-                const backGeo = new THREE.BoxGeometry(1.2, 1.2, 0.2);
-                const back = new THREE.Mesh(backGeo, seatMat);
-                back.position.set(0, 1.5, -0.5);
-                back.castShadow = true;
-                group.add(back);
+                const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.2), seatMat);
+                back.position.set(0, 1.5, -0.5); back.castShadow = true; group.add(back);
 
-                // Legs
                 const chairLegMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
                 for (let i = -0.5; i <= 0.5; i += 1) {
                     for (let j = -0.5; j <= 0.5; j += 1) {
                         const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8), chairLegMat);
-                        cl.position.set(i, 0.4, j);
-                        cl.castShadow = true;
-                        group.add(cl);
+                        cl.position.set(i, 0.4, j); cl.castShadow = true; group.add(cl);
                     }
                 }
                 group.position.set(randomX, 0, randomZ);
 
+            } else if (type === 'sofa') {
+                const sofaMat = new THREE.MeshStandardMaterial({ color: 0x718096, roughness: 0.8 });
+                const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.5, 1.4), sofaMat);
+                base.position.y = 0.45; base.castShadow = true; group.add(base);
+                
+                const back = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 0.3), sofaMat);
+                back.position.set(0, 1.1, -0.55); back.castShadow = true; group.add(back);
+                
+                const armGeo = new THREE.BoxGeometry(0.3, 0.9, 1.4);
+                const leftArm = new THREE.Mesh(armGeo, sofaMat);
+                leftArm.position.set(-1.6, 0.8, 0); leftArm.castShadow = true; group.add(leftArm);
+                
+                const rightArm = new THREE.Mesh(armGeo, sofaMat);
+                rightArm.position.set(1.6, 0.8, 0); rightArm.castShadow = true; group.add(rightArm);
+
+                group.position.set(randomX, 0, randomZ);
+
             } else if (type === 'plant') {
-                // Indoor House Plant (Pot + Stem + Leaves)
                 const potMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-                const potGeo = new THREE.CylinderGeometry(0.4, 0.3, 0.9, 16);
-                const pot = new THREE.Mesh(potGeo, potMat);
-                pot.position.y = 0.45;
-                pot.castShadow = true;
-                group.add(pot);
+                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.3, 0.9, 16), potMat);
+                pot.position.y = 0.45; pot.castShadow = true; group.add(pot);
 
                 const plantMat = new THREE.MeshStandardMaterial({ color: 0x276749, roughness: 0.5 });
                 for (let i = 0; i < 5; i++) {
-                    const leafGeo = new THREE.SphereGeometry(0.3, 8, 8);
-                    const leaf = new THREE.Mesh(leafGeo, plantMat);
+                    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), plantMat);
                     leaf.position.set((Math.random() - 0.5) * 0.4, 1.0 + i * 0.2, (Math.random() - 0.5) * 0.4);
-                    leaf.scale.set(0.8, 1.5, 0.8);
-                    leaf.castShadow = true;
-                    group.add(leaf);
+                    leaf.scale.set(0.8, 1.5, 0.8); leaf.castShadow = true; group.add(leaf);
                 }
                 group.position.set(randomX, 0, randomZ);
+
+            } else if (type === 'lamp') {
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x2d3748, metalness: 0.8, roughness: 0.2 });
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1, 16), metalMat);
+                base.position.y = 0.05; base.castShadow = true; group.add(base);
+
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 4.5), metalMat);
+                pole.position.y = 2.25; pole.castShadow = true; group.add(pole);
+
+                const shadeMat = new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.3, side: THREE.DoubleSide });
+                const shade = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.2, 16, 1, true), shadeMat);
+                shade.position.y = 4.0; shade.castShadow = true; group.add(shade);
+
+                group.position.set(randomX, 0, randomZ);
+
+            } else if (type === 'rug') {
+                const rugMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 1.0 });
+                const rug = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 3.5), rugMat);
+                rug.rotation.x = -Math.PI / 2;
+                rug.position.set(randomX, 0.005, randomZ);
+                rug.receiveShadow = true;
+                group.add(rug);
+
+            } else if (type === 'frame') {
+                const frameMat = new THREE.MeshStandardMaterial({ color: 0x1a202c });
+                const canvasMat = new THREE.MeshStandardMaterial({ color: 0xf7fafc, roughness: 0.9 });
+                
+                const frameOuter = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.5, 0.1), frameMat);
+                const frameInner = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.3, 0.12), canvasMat);
+                
+                const frameGroup = new THREE.Group();
+                frameGroup.add(frameOuter);
+                frameGroup.add(frameInner);
+
+                frameGroup.position.set((Math.random() - 0.5) * 6, 2.5, -roomDepth / 2 + 0.06);
+                scene.add(frameGroup);
+                spawnedObjects.push(frameGroup);
+                return;
             }
 
             scene.add(group);
@@ -298,6 +346,36 @@
                 scene.remove(obj);
             });
             spawnedObjects = [];
+        };
+
+        // Database Save Functionality
+        window.saveRoomLayout = function() {
+            const payload = {
+                name: "My Scandinavian Studio",
+                wall_color: '0x' + wallMat.color.getHexString(),
+                floor_color: '0x' + floorMat.color.getHexString(),
+                furniture_data: [] 
+            };
+
+            fetch('/api/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert('Room layout successfully saved to Django Database! (ID: ' + data.layout_id + ')');
+                } else {
+                    alert('Error saving room: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to connect to backend.');
+            });
         };
 
         // 8. Window Resize Handler
