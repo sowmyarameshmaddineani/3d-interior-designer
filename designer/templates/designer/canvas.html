@@ -132,8 +132,9 @@
             </div>
         </div>
 
-        <div class="control-group" style="margin-top: 15px;">
-            <button onclick="saveRoomLayout()" style="background:#10b981; color:white; border-color:#10b981; width:100%; font-weight:600; padding:8px;">💾 Save Room Layout</button>
+        <div class="control-group" style="margin-top: 15px; display: flex; gap: 6px;">
+            <button onclick="saveRoomLayout()" style="background:#10b981; color:white; border-color:#10b981; flex:1; font-weight:600; padding:8px;">💾 Save</button>
+            <button onclick="promptLoadRoom()" style="background:#3b82f6; color:white; border-color:#3b82f6; flex:1; font-weight:600; padding:8px;">📂 Load</button>
         </div>
     </div>
 
@@ -370,6 +371,34 @@
                     alert('Room layout successfully saved to Django Database! (ID: ' + data.layout_id + ')');
                 } else {
                     alert('Error saving room: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to connect to backend.');
+            });
+        };
+
+        // Database Load Functionality
+        window.promptLoadRoom = function() {
+            const layoutId = prompt("Enter the Room Layout ID you want to load (e.g., 1):");
+            if (!layoutId) return;
+
+            fetch(`/api/load/${layoutId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    const layout = data.layout;
+                    
+                    // Apply loaded wall color
+                    wallMat.color.setHex(layout.wall_color);
+                    
+                    // Apply loaded floor color
+                    floorMat.color.setHex(layout.floor_color);
+
+                    alert(`Successfully loaded layout: "${layout.name}"!`);
+                } else {
+                    alert('Error loading room: ' + data.message);
                 }
             })
             .catch(error => {
