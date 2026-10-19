@@ -1,0 +1,14 @@
+3D Interior Designer - Project Requirements
+
+Must-Have Features (Core):
+- User authentication (Sign up, Login, Logout)
+- Interactive 3D Room Canvas using Three.js
+- Custom room dimensions (Adjust length, width, and height)
+- Load & place GLB 3D furniture models (Chairs, Tables, Sofas)
+- Object controls (Move along X, Y, Z axes & rotate)
+- Save and Load room design state from database (PostgreSQL + Django)
+
+Nice-to-Have Features (Future Upgrades):
+- Custom wall paint color picker
+- Custom floor texture switcher
+- Export 3D room render as an image file
